@@ -233,9 +233,8 @@ body{display:flex;flex-direction:column}
     <div class="login-form" id="form-member">
       <div class="login-error" id="err-member"></div>
       <div class="form-group"><label class="form-label">Seu código de acesso</label>
-        <input class="form-input" id="member-code" placeholder="Ex: CREME11"
-          style="text-transform:uppercase;letter-spacing:2px;font-size:18px;text-align:center"
-          oninput="this.value=this.value.toUpperCase()"></div>
+        <input class="form-input" id="member-code" placeholder="Ex: Junior Alves"
+          style="font-size:16px;text-align:center"></div>
       <button class="btn btn-primary" onclick="loginMember()">Entrar</button>
     </div>
   </div>
@@ -739,7 +738,7 @@ window.loginAdmin = async()=>{
 };
 
 window.loginMember = async()=>{
-  const code=document.getElementById('member-code').value.trim().toUpperCase();
+  const code=document.getElementById('member-code').value.trim();
   const err=document.getElementById('err-member');
   err.classList.remove('show');
   if(!code){err.textContent='Digite o código';err.classList.add('show');return;}
@@ -767,7 +766,7 @@ window.loginMember = async()=>{
   };
 
   // 1. Verificar no cache local primeiro (funciona mesmo offline)
-  const mLocal=(window.db.mensalistas||[]).find(x=>x.code&&x.code.toUpperCase()===code);
+  const mLocal=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
   if(mLocal){
     iniciarSessao(mLocal);
     // Atualizar dados do Firestore em background
@@ -785,7 +784,7 @@ window.loginMember = async()=>{
       Object.assign(window.db,snap.data());
       migrarCodigos();
       window.saveLocal();
-      const m=(window.db.mensalistas||[]).find(x=>x.code&&x.code.toUpperCase()===code);
+      const m=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
       if(m){ iniciarSessao(m); return; }
       hideLoad();
       err.textContent='Código inválido. Verifique com o administrador.';
@@ -794,7 +793,7 @@ window.loginMember = async()=>{
       // Documento não existe no Firestore — usar dados locais com migração
       migrarCodigos();
       window.saveLocal();
-      const m2=(window.db.mensalistas||[]).find(x=>x.code&&x.code.toUpperCase()===code);
+      const m2=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
       if(m2){ iniciarSessao(m2); return; }
       hideLoad();
       err.textContent='Código inválido. Verifique com o administrador.';
