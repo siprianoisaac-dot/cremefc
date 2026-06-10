@@ -751,25 +751,30 @@ window.loginMember = async()=>{
   if(!code){err.textContent='Digite o código';err.classList.add('show');return;}
   showLoad('Verificando...');
 
-  const iniciarSessao=async(m)=>{
+  const iniciarSessao=(m)=>{
     window._role='member';
     window._memberId=m.id;
     localStorage.setItem('cremefc_mc',code);
-    // Login anônimo no Firebase para ter autenticação válida
-    try {
-      if(!auth.currentUser){
-        await signInAnonymously(auth);
-      }
-    } catch(e){ console.log('Anon login erro:',e); }
     hideLoad();
     showMemberApp(m);
-    // Listener em tempo real em background
-    try {
-      if(unsubscribe)unsubscribe();
-      unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
-        if(s.exists()){Object.assign(window.db,s.data());migrarCodigos();window.saveLocal();window.renderMemberView();}
-      });
-    } catch(e){ console.log('Listener erro:',e); }
+    // Login anônimo em background — não bloqueia a entrada
+    if(!auth.currentUser){
+      signInAnonymously(auth).then(()=>{
+        // Listener em tempo real após login anônimo
+        if(unsubscribe)unsubscribe();
+        unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
+          if(s.exists()){Object.assign(window.db,s.data());migrarCodigos();window.saveLocal();window.renderMemberView();}
+        });
+      }).catch(e=>console.log('Anon login erro:',e));
+    } else {
+      // Já tem sessão — só listener
+      try {
+        if(unsubscribe)unsubscribe();
+        unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
+          if(s.exists()){Object.assign(window.db,s.data());migrarCodigos();window.saveLocal();window.renderMemberView();}
+        });
+      } catch(e){ console.log('Listener erro:',e); }
+    }
   };
 
   // 0. Migrar códigos locais antes de buscar
