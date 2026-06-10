@@ -1,4 +1,4 @@
-const CACHE = 'cremefc-v3';
+const CACHE = 'cremefc-v4';
 const ASSETS = [
   '/index.html',
   '/manifest.json',

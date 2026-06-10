@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.netlify.frolicking_lokum_e76d57.twa",
+    "sha256_cert_fingerprints": ["66:5E:D2:65:76:F6:ED:2F:F4:74:4A:E6:74:46:F2:0E:02:D5:97:34:E3:03:04:40:DB:BE:A8:5C:C5:4A:96:64"]
+  }
+}]
