@@ -1339,13 +1339,13 @@ window.mostrarCodigo=(mid)=>{
   document.getElementById('mcs-title').textContent='Código de '+m.nome;
   document.getElementById('mcs-name').textContent=m.nome;
   document.getElementById('mcs-code').textContent=m.code;
-  const url='https://siprianoisaac-dot.github.io/cremefc';
+  const url='https://siprianoisaac-ponto.github.io/cremefc';
   const msg=`Olá, ${m.nome}! 👋
 
 Seu acesso ao app do *CremeFC* está pronto! 🍺⚽
 
 📱 *Acesse o app:*
-https://siprianoisaac-dot.github.io/cremefc
+https://siprianoisaac-ponto.github.io/cremefc
 
 🔑 *Seu código de acesso:* ${m.code}
 
@@ -1964,7 +1964,7 @@ window.abrirWpp=(sabId,mid)=>{
   const sAnt=window.saldoAnt(mid,mes);
   const tPagoMes=sabsMes.reduce((s,s2)=>{const p=s2.participantes?.find(x=>x.mensalistaId===mid);return s+(p?window.totPago(p):0);},0);
   const totalDever=totalMes+Math.max(0,sAnt)-tPagoMes;
-  const appUrl='https://siprianoisaac-dot.github.io/cremefc';
+  const appUrl='https://siprianoisaac-ponto.github.io/cremefc';
   const msg=`Olá, ${m.nome}! 😊\n\nFechamento de *${window.fmtM(mes+'-01')}*\n\n📋 *Consumos por sábado:*\n${linhas||'  Sem consumos'}\n\n💰 *Total do mês:* ${window.fmt(totalMes)}${sAnt>0?`\n⏮ *Saldo anterior:* ${window.fmt(sAnt)}`:sAnt<0?`\n💚 *Crédito anterior:* −${window.fmt(Math.abs(sAnt))}`:''}${tPagoMes>0?`\n✅ *Já pago:* ${window.fmt(tPagoMes)}`:''}\n⚠️ *Total a pagar:* ${window.fmt(Math.max(0,totalDever))}\n\n✅ PIX  ✅ Cartão  ✅ Dinheiro\n🔑 *PIX:* ${window.db.config?.pix||'—'}\n\n📱 Seu extrato: ${appUrl}\n🔑 Código: ${m.code||'solicite ao admin'}\n\n🏟️ CremeFC`;
   document.getElementById('mw-title').textContent='Cobrança — '+m.nome;
   document.getElementById('mw-msg').textContent=msg;
