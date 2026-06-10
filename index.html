@@ -751,7 +751,7 @@ window.loginMember = async()=>{
   if(!code){err.textContent='Digite o código';err.classList.add('show');return;}
   showLoad('Verificando...');
 
-  const iniciarSessao=async(m)=>{
+  const iniciarSessao=(m)=>{
     window._role='member';
     window._memberId=m.id;
     localStorage.setItem('cremefc_mc',code);
@@ -760,29 +760,28 @@ window.loginMember = async()=>{
     hideLoad();
     showMemberApp(m);
 
-    // Buscar dados frescos do Firestore em background e atualizar
-    const startListener=()=>{
+    // Sincronizar com Firestore em background
+    // Usa a sessão atual (admin que saiu ou anônima já existente)
+    try {
       if(unsubscribe)unsubscribe();
       unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
         if(s.exists()){
           Object.assign(window.db,s.data());
           migrarCodigos();
           window.saveLocal();
-          window.renderMemberView(); // Atualiza totais com dados reais
+          window.renderMemberView();
         }
+      },(err)=>{
+        // Se falhar por auth, tentar signInAnonymously
+        signInAnonymously(auth).then(()=>{
+          if(unsubscribe)unsubscribe();
+          unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
+            if(s.exists()){Object.assign(window.db,s.data());migrarCodigos();window.saveLocal();window.renderMemberView();}
+          });
+        }).catch(e=>console.log('Auth erro:',e));
       });
-    };
-
-    if(!auth.currentUser){
-      signInAnonymously(auth)
-        .then(startListener)
-        .catch(e=>{
-          console.log('Anon login erro:',e);
-          // Mesmo sem autenticação, tentar carregar dados
-          try { startListener(); } catch(e2){}
-        });
-    } else {
-      startListener();
+    } catch(e){
+      console.log('Listener erro:',e);
     }
   };
 
