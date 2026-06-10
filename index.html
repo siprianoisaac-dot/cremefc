@@ -561,13 +561,20 @@ function migrarCodigos() {
   window.db.mensalistas.forEach(m => {
     const codeCorreto = CODIGOS_CORRETOS[m.id];
     if(codeCorreto && m.code !== codeCorreto) {
-      // Só sobrescreve se for código antigo padrão CREMEXX ou vazio
-      // Não sobrescreve se admin tiver definido um código customizado diferente
-      const ehPadrao = !m.code || m.code === `CREME${m.id}` || m.code === '';
-      if(ehPadrao) {
-        m.code = codeCorreto;
-        alterou = true;
-      }
+      // Sempre atualiza para o código correto mais recente
+      m.code = codeCorreto;
+      alterou = true;
+    }
+    // Adicionar novos mensalistas que não existem no cache local
+  });
+  // Adicionar mensalistas novos (IDs 45-52) se não existirem
+  const idsExistentes = window.db.mensalistas.map(m=>m.id);
+  Object.entries(CODIGOS_CORRETOS).forEach(([id,code])=>{
+    const mid = parseInt(id);
+    if(!idsExistentes.includes(mid)){
+      // Buscar dados do defaultDB
+      const defaultMens = defaultLocalDB().mensalistas.find(x=>x.id===mid);
+      if(defaultMens){ window.db.mensalistas.push({...defaultMens,code}); alterou=true; }
     }
   });
   return alterou;
@@ -764,6 +771,10 @@ window.loginMember = async()=>{
       });
     } catch(e){ console.log('Listener erro:',e); }
   };
+
+  // 0. Migrar códigos locais antes de buscar
+  migrarCodigos();
+  window.saveLocal();
 
   // 1. Verificar no cache local primeiro (funciona mesmo offline)
   const mLocal=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
