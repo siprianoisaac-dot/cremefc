@@ -744,7 +744,7 @@ window.loginAdmin = async()=>{
   }
 };
 
-window.loginMember = ()=>{
+window.loginMember = async()=>{
   const code=document.getElementById('member-code').value.trim();
   const err=document.getElementById('err-member');
   err.classList.remove('show');
@@ -753,14 +753,11 @@ window.loginMember = ()=>{
   // Migrar códigos antes de buscar
   migrarCodigos();
 
-  // Buscar no cache local
-  const m=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
-  if(m){
+  const entrar=(m)=>{
     window._role='member';
     window._memberId=m.id;
     localStorage.setItem('cremefc_mc',code);
     showMemberApp(m);
-    // Sincronizar com Firestore em background
     try {
       if(unsubscribe)unsubscribe();
       unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
@@ -772,12 +769,31 @@ window.loginMember = ()=>{
         }
       });
     } catch(e){ console.log('Sync erro:',e); }
-    return;
-  }
+  };
 
-  // Não achou no cache — mostrar erro
-  err.textContent='Código inválido. Verifique com o administrador.';
-  err.classList.add('show');
+  // 1. Buscar no cache local
+  const mLocal=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
+  if(mLocal){ entrar(mLocal); return; }
+
+  // 2. Cache vazio — buscar no Firestore
+  showLoad('Verificando...');
+  try {
+    const snap=await getDoc(doc(fdb,'club','data'));
+    hideLoad();
+    if(snap.exists()){
+      Object.assign(window.db,snap.data());
+      migrarCodigos();
+      window.saveLocal();
+      const mFirestore=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
+      if(mFirestore){ entrar(mFirestore); return; }
+    }
+    err.textContent='Código inválido. Verifique com o administrador.';
+    err.classList.add('show');
+  } catch(e){
+    hideLoad();
+    err.textContent='Erro de conexão. Tente novamente.';
+    err.classList.add('show');
+  }
 };
 
 window.logout = ()=>{
