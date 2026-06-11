@@ -744,24 +744,23 @@ window.loginAdmin = async()=>{
   }
 };
 
-window.loginMember = async()=>{
+window.loginMember = ()=>{
   const code=document.getElementById('member-code').value.trim();
   const err=document.getElementById('err-member');
   err.classList.remove('show');
   if(!code){err.textContent='Digite o código';err.classList.add('show');return;}
-  showLoad('Verificando...');
 
-  const iniciarSessao=(m)=>{
+  // Migrar códigos antes de buscar
+  migrarCodigos();
+
+  // Buscar no cache local
+  const m=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
+  if(m){
     window._role='member';
     window._memberId=m.id;
     localStorage.setItem('cremefc_mc',code);
-
-    // Mostrar app imediatamente com dados do cache
-    hideLoad();
     showMemberApp(m);
-
     // Sincronizar com Firestore em background
-    // Usa a sessão atual (admin que saiu ou anônima já existente)
     try {
       if(unsubscribe)unsubscribe();
       unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
@@ -769,67 +768,16 @@ window.loginMember = async()=>{
           Object.assign(window.db,s.data());
           migrarCodigos();
           window.saveLocal();
-          window.renderMemberView();
+          if(window._role==='member') window.renderMemberView();
         }
-      },(err)=>{
-        // Se falhar por auth, tentar signInAnonymously
-        signInAnonymously(auth).then(()=>{
-          if(unsubscribe)unsubscribe();
-          unsubscribe=onSnapshot(doc(fdb,'club','data'),(s)=>{
-            if(s.exists()){Object.assign(window.db,s.data());migrarCodigos();window.saveLocal();window.renderMemberView();}
-          });
-        }).catch(e=>console.log('Auth erro:',e));
       });
-    } catch(e){
-      console.log('Listener erro:',e);
-    }
-  };
-
-  // 0. Migrar códigos locais antes de buscar
-  migrarCodigos();
-  window.saveLocal();
-
-  // 1. Verificar no cache local primeiro (funciona mesmo offline)
-  const mLocal=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
-  if(mLocal){
-    iniciarSessao(mLocal);
-    // Atualizar dados do Firestore em background
-    try {
-      const snap=await getDoc(doc(fdb,'club','data'));
-      if(snap.exists()){Object.assign(window.db,snap.data());migrarCodigos();window.saveLocal();}
-    } catch(e){ console.log('Sync background falhou, usando cache local'); }
+    } catch(e){ console.log('Sync erro:',e); }
     return;
   }
 
-  // 2. Não achou no cache — tentar Firestore
-  try {
-    const snap=await getDoc(doc(fdb,'club','data'));
-    if(snap.exists()){
-      Object.assign(window.db,snap.data());
-      migrarCodigos();
-      window.saveLocal();
-      const m=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
-      if(m){ iniciarSessao(m); return; }
-      hideLoad();
-      err.textContent='Código inválido. Verifique com o administrador.';
-      err.classList.add('show');
-    } else {
-      // Documento não existe no Firestore — usar dados locais com migração
-      migrarCodigos();
-      window.saveLocal();
-      const m2=(window.db.mensalistas||[]).find(x=>x.code&&x.code.trim().toLowerCase()===code.trim().toLowerCase());
-      if(m2){ iniciarSessao(m2); return; }
-      hideLoad();
-      err.textContent='Código inválido. Verifique com o administrador.';
-      err.classList.add('show');
-    }
-  } catch(e){
-    hideLoad();
-    // Se falhou mas tinha cache local com qualquer código parecido, sugerir
-    err.textContent='Sem conexão com a internet. Conecte-se e tente novamente.';
-    err.classList.add('show');
-    console.log('Erro Firestore:', e.code, e.message);
-  }
+  // Não achou no cache — mostrar erro
+  err.textContent='Código inválido. Verifique com o administrador.';
+  err.classList.add('show');
 };
 
 window.logout = ()=>{
