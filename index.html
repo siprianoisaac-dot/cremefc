@@ -2070,4 +2070,34 @@ window.exportarRelatorioPDF=(mk)=>{
   ${devedores.map(({m,saldo})=>`<tr><td>${m.nome}</td><td style="color:#991b1b;font-weight:700">${window.fmt(saldo)}</td></tr>`).join('')}
   </table>`:''}
   <div class="footer">CremeFC · Bar do Clube · ${nomeMes} · frolicking-lokum-e76d57.netlify.app</div>
-  </body></html>
+  
+<script>
+// ═══════════════ SPLASH + SW ═══════════════
+window._authDone = false;
+
+window.hideSplash = function() {
+  const splash = document.getElementById('splash');
+  if(!splash) return;
+  splash.style.opacity = '0';
+  splash.style.transition = 'opacity 0.4s';
+  setTimeout(function(){ splash.style.display = 'none'; }, 400);
+};
+
+window.hideSplashIfReady = function() {
+  if(window._authDone) window.hideSplash();
+};
+
+window.addEventListener('load', function() {
+  const bar = document.getElementById('splash-bar');
+  if(bar) setTimeout(function(){ bar.style.width='100%'; }, 100);
+
+  // Fallback: some em 5s independente do Firebase
+  setTimeout(function(){ window.hideSplash(); }, 5000);
+
+  // Service Worker
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+});
+</script>
+</body></html>
